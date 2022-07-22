@@ -38,7 +38,7 @@ function retrieveHist() {
 
 		btnHist.prepend(rowShow);
 		rowShow.append(btnShow);
-	} if (!city) {
+	} if (!cityCall) {
 		return;
 	}
 	//Button can search
@@ -115,5 +115,82 @@ function retrieveWeather() {
 			}
 		});
 	});
-	getFiveDayForecast();
+	retrieveForecast();
 };
+
+var forecastElementFinal = $('.nowForecast');
+
+function retrieveForecast() {
+	var forecastURL = `https://api.openweathermap.org/data/2.5/forecast?q=${cityCall}&units=imperial&appid=${keyAPI}`;
+
+	// CURRENT
+	$.ajax({
+		url: forecastURL,
+		method: 'GET',
+	}).then(function (response) {
+		var arrayDay = response.list;
+		var weatherCall = [];
+		//creating object for data
+		$.each(arrayDay, function (index, value) {
+			testObj = {
+				date: value.dt_txt.split(' ')[0],
+				time: value.dt_txt.split(' ')[1],
+				temp: value.main.temp,
+				feels_like: value.main.feels_like,
+				icon: value.weather[0].icon,
+				humidity: value.main.humidity
+			}
+
+			if (value.dt_txt.split(' ')[1] === "12:00:00") {
+				 weatherCall.push(testObj);
+			}
+		})
+		//Creating cards to show on screen
+		for (let i = 0; i < weatherCall.length; i++) {
+
+			var cardDiv = $('<div>');
+			cardDiv.attr('class', 'card text-white bg-primary mb-3 cardOne');
+			cardDiv.attr('style', 'max-width: 200px;');
+			forecastElementFinal.append(cardDiv);
+
+			var cardHeader = $('<div>');
+			cardHeader.attr('class', 'card-header')
+			var momentTime = moment(`${weatherCall[i].date}`).format('MM-DD-YYYY');
+			cardHeader.text(momentTime);
+			cardDiv.append(cardHeader)
+
+			var bodyDiv = $('<div>');
+			bodyDiv.attr('class', 'card-body');
+			cardDiv.append(bodyDiv);
+
+			var iconDiv = $('<img>');
+			iconDiv.attr('class', 'icons');
+			iconDiv.attr('src', `https://openweathermap.org/img/wn/${weatherCall[i].icon}@2x.png`);
+			bodyDiv.append(iconDiv);
+
+			//Temp
+			var pTemp = $('<p>').text(`Temperature: ${weatherCall[i].temp} °F`);
+			bodyDiv.append(pTemp);
+			//Feels Like
+			var pFeel = $('<p>').text(`Feels Like: ${weatherCall[i].feels_like} °F`);
+			bodyDiv.append(pFeel);
+			//Humidity
+			var pHumid = $('<p>').text(`Humidity: ${weatherCall[i].humidity} %`);
+			bodyDiv.append(pHumid);
+		}
+	});
+};
+
+//Allows for the example data to load for Denver
+function initLoad() {
+
+	var storecityValue = JSON.parse(localStorage.getItem('city'));
+
+	if (storecityValue !== null) {
+		typeHistory = storecityValue
+	}
+	retrieveHist();
+	retrieveWeather();
+};
+
+initLoad();
